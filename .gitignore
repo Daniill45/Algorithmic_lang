@@ -1,0 +1,9 @@
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.mdf
+*.ldf
+*.ndf
+*.DS_Store
