@@ -1,177 +1,18 @@
-#include <iostream>
-#include <fstream>
-#include <string>
+
+
+#include "pipes.h"
+#include "validation.h"
+#include "compressor.h"
 
 using namespace std;
 
-const int empty_strings = 1000;
-const double inf = 1e123;
+//Логи только цифрами которые вводит пользователь
+//для функции валидации  напрямую аргумент
+//
 
-struct Pipeline
-{
-    string name = "";
-    double length = 0;
-    double diametr = 0;
-    bool in_repair = false;
-};
 
-struct Compressor
-{
-    string name = "";
-    int manufact = 0;
-    int manufact_in_work = 0;
-    double efficiency = 0;
-};
-template <typename T1, typename T2, typename T3>
-void is_valid(T1 &varible, T2 a, T3 b)
-{
 
-    while (!(cin >> varible) || (varible < a) || (varible > b) || (cin.peek() != '\n'))
-    {
-        cout << "Ошибка: Введите корректное значение: ";
-        cin.clear();
-        cin.ignore(empty_strings, '\n');
-    }
-}
-
-void create_pipe(Pipeline &pipe)
-{
-    string name;
-    double lenght = -1;
-    double diametr = -1;
-    bool in_repair = 1;
-    cout << "Введите название трубы:" << endl;
-    cin >> ws;
-    getline(cin, name);
-    cout << "Введите длину:" << endl;
-    is_valid(lenght, 0.0, double(inf));
-    cout << "Введите диаметр:" << endl;
-    is_valid(diametr, 0.0, double(inf));
-    cout << "Введите 1 если труба в ремонте, иначе 0:" << endl;
-    is_valid(in_repair, bool(0), bool(1));
-    pipe.name = name;
-    pipe.length = lenght;
-    pipe.diametr = diametr;
-    pipe.in_repair = in_repair;
-}
-void create_CS(Compressor &cs)
-{
-    string name;
-    int manufact = -1;
-    int manufact_in_work = -1;
-    double effic = -1;
-    cout << "Введите название кс:" << endl;
-    cin >> ws;
-    getline(cin, name);
-    cs.name = name;
-    cout << "Введите количество цехов:" << endl;
-    is_valid(manufact, 0, inf);
-    cout << "Введите количество цехов в работе:" << endl;
-    is_valid(manufact_in_work, 0, manufact);
-    cout << "Введите эффективность:" << endl;
-    is_valid(effic, 0.0, 100.0);
-    cs.manufact = manufact;
-    cs.manufact_in_work = manufact_in_work;
-    cs.efficiency = effic;
-}
-
-void edit_pipe(Pipeline &pipe)
-{
-    bool in_repair;
-    if (pipe.name.empty())
-    {
-        cout << "Труба не нашлась..." << endl;
-    }
-    else
-    {
-        cout << "Введите 1 если труба в ремонте, иначе 0" << endl;
-        is_valid(in_repair, 0, 1);
-        pipe.in_repair = in_repair;
-    }
-}
-void edit_cs(Compressor &station)
-{
-
-    int manufact_in_work;
-
-    if (station.name.empty())
-    {
-        cout << "Компрессорная станция не нашлась" << endl;
-    }
-    else
-    {
-        cout << "Введите количество цехов в работе:" << endl;
-        is_valid(manufact_in_work, 0, station.manufact);
-        station.manufact_in_work = manufact_in_work;
-    }
-}
-void show_pipe(Pipeline &pipe)
-{
-    if (!pipe.name.empty())
-    {
-        cout << endl;
-        cout << "Трубопровод:" << endl;
-        cout << "Название:" << pipe.name << endl;
-        cout << "Длина:" << pipe.length << endl;
-        cout << "Диаметр:" << pipe.diametr << endl;
-        cout << "На ремонте:" << (pipe.in_repair ? "Да" : "Нет") << endl;
-    }
-}
-void show_station(Compressor &station)
-{
-    if (!station.name.empty())
-    {
-        cout << endl;
-        cout << "Компрессорная станция:" << endl;
-        cout << "Название:" << station.name << endl;
-        cout << "Количество цехов:" << station.manufact << endl;
-        cout << "Количество цехов в работе:" << station.manufact_in_work << endl;
-        cout << "Эффективность:" << station.efficiency << endl;
-    }
-}
-void save_pipe(Pipeline &pipe, string file_name)
-{
-
-    ofstream f(file_name, ios::app);
-
-    if (!f)
-    {
-        cout << "Ошибка открытия файла для сохранения: " << file_name << endl;
-        return;
-    }
-    if (!pipe.name.empty())
-    {
-        f << "Трубопровод:\n";
-        f << pipe.name << "\n";
-        f << pipe.length << "\n";
-        f << pipe.diametr << "\n";
-        f << pipe.in_repair << "\n";
-    }
-    f.close();
-}
-void save_compressor(Compressor &station, string file_name)
-{
-    ofstream f(file_name, ios::app);
-
-    if (!f)
-    {
-        cout << "Ошибка открытия файла для сохранения: " << file_name << endl;
-        return;
-    }
-    if (!station.name.empty())
-    {
-        f << "КС:\n";
-        f << station.name << "\n";
-        f << station.manufact << "\n";
-        f << station.manufact_in_work << "\n";
-        f << station.efficiency << "\n";
-    }
-
-    f.close();
-    cout << "Данные сохранены в файл: " << file_name << endl;
-}
-
-void load_data(Pipeline &pipe, Compressor &station)
+void load_data(unordered_map<int,Pipeline> &pipe_map,unordered_map<int,Compressor> &cs_map)
 {
     string file_name;
     cout << "Введите имя файла на загрузку: ";
@@ -179,27 +20,59 @@ void load_data(Pipeline &pipe, Compressor &station)
     ifstream f(file_name);
     if (!f)
     {
-        cout << "Ошибка открытия файла на загрузку: " << file_name << endl;
+        cerr << "Ошибка открытия файла на загрузку: " << file_name << endl;
         return;
     }
-
+    pipe_map.clear();
+    cs_map.clear();
     string line;
-    while (getline(f, line))
-    {
-        if (line == "Трубопровод:")
-        {
-            f >> pipe.name >> pipe.length >> pipe.diametr >> pipe.in_repair;
+    Pipeline pipe;
+    while (getline(f, line)) {
+        if (line == "Трубопровод:") {
+            Pipeline pipe;
+            f >> ws;
+            getline(f, line);
+            pipe.name=line;
+            //double length;
+            //f >> length;
+            //pipe.length=length;
+            f >>pipe.length;
+            //double diameter;
+            //f >> diameter;
+            //pipe.diametr=diameter;
+            f >> pipe.diametr;
+            //bool under_repair;
+            //f >> under_repair;
+            //pipe.in_repair=under_repair;
+            f >> pipe.in_repair;
+            pipe_map.insert({pipe.getid(),pipe});
             f.ignore(empty_strings, '\n');
-        }
-        else if (line == "КС:")
-        {
-            f >> station.name >> station.manufact >> station.manufact_in_work >> station.efficiency;
+        }else if (line == "КС:"){
+            Compressor cs;
+            f >> ws;
+            getline(f, line);
+            cs.name=line;
+            //int manufact;
+            //f >> manufact;
+            //cs.manufact=manufact;
+            f>>cs.manufact;
+            //int manufact_in_work;
+            //f >> manufact_in_work;
+            //cs.manufact_in_work=manufact_in_work;
+            f >> cs.manufact_in_work;
+            //bool effic;
+            //f >> effic;
+            //cs.efficiency=effic;
+            f >> cs.efficiency;
+            cs_map.insert({cs.getid(),cs});
             f.ignore(empty_strings, '\n');
         }
     }
+
     f.close();
     cout << "Данные загружены из файла: " << file_name << endl;
 }
+
 
 void Menu()
 {
@@ -210,63 +83,112 @@ void Menu()
          << "5-Редактировать КС" << endl
          << "6-Сохранить" << endl
          << "7-Загрузить" << endl
+         << "8-Удалить трубу" << endl
+         << "9-Удалить кс" << endl
+         << "10-Пакетное редактирование кс" << endl
+         << "11-Пакетное редактирование трубы" << endl
          << "0-Выход" << endl;
 }
+
 int main()
-{
+{   
     int MODE = 0;
-    Pipeline pipe;
-    Compressor station;
+    unordered_map<int, Pipeline> pipe_map;
+    unordered_map<int, Compressor> cs_map;
+    string action;
     while (1)
     {
         Menu();
-        is_valid(MODE, 0, 7);
+        is_valid(MODE,0,11);
         if (MODE != 0)
         {
             switch (MODE)
             {
             case 1:
             {
-                create_pipe(pipe);
+                action = "1";
+                logUserAction(action);
+                create_pipe(pipe_map);
                 break;
             }
             case 2:
             {
-                create_CS(station);
+                action = "2";
+                logUserAction(action);
+                create_CS(cs_map);
                 break;
             }
             case 3:
-            {
-                show_pipe(pipe);
-                show_station(station);
-                if ((pipe.name.empty()) && (station.name.empty()))
-                {
-                    cout << "Ничего не нашлось..." << endl;
+            {   
+                action = "3";
+                logUserAction(action);
+                list<int> pipe_indexes;
+                for(auto it=pipe_map.begin();it!=pipe_map.end();it++) {
+                    pipe_indexes.push_back(it->first);
+                } 
+                list<int> cs_indexes;
+                for(auto it=cs_map.begin();it!=cs_map.end();it++) {
+                    cs_indexes.push_back(it->first);
                 }
+                show_pipe(pipe_map,pipe_indexes);
+                show_cs(cs_map,cs_indexes);
                 break;
             }
             case 4:
+
             {
-                edit_pipe(pipe);
+                action = "4";
+                logUserAction(action);
+                edit_pipe(pipe_map);
                 break;
             }
             case 5:
             {
-                edit_cs(station);
+                action = "5";
+                logUserAction(action);
+                edit_cs(cs_map);
                 break;
             }
             case 6:
-            {
+            {      
+                action = "6";
+                logUserAction(action);
                 string file_name;
                 cout << "Введите имя файла на сохранение: ";
                 cin >> file_name;
-                save_compressor(station, file_name);
-                save_pipe(pipe, file_name);
+                save_cs(cs_map,file_name);
+                save_pipe(pipe_map,file_name);
                 break;
             }
             case 7:
             {
-                load_data(pipe, station);
+                action = "7";
+                logUserAction(action);
+                load_data(pipe_map,cs_map);
+                break;
+            }
+            case 8:{
+                action = "8";
+                logUserAction(action);
+                del_pipe(pipe_map);
+                break;
+            }
+            case  9:{
+                action = "9";
+                logUserAction(action);
+                del_cs(cs_map);
+                break;
+            }
+            case 10:{
+                action = "10";
+                logUserAction(action);
+                pocket_edit_cs(cs_map);
+                break;
+            }
+            case 11:{
+                action = "11";
+                logUserAction(action);
+                pocket_edit_pipe(pipe_map);
                 break;
             }
             }
